@@ -7,7 +7,7 @@ public abstract class ExactCoverProblem<P, Q> {
     Set<P> universe;
     Set<Q> constraints;
 
-    Node root;
+    DLXNode root;
 
     public ExactCoverProblem(Set<P> universe, Set<Q> constraints) {
         this.universe = universe;
@@ -18,9 +18,9 @@ public abstract class ExactCoverProblem<P, Q> {
 
     public Set<P> solve2() {
         Set<P> solution = new HashSet();
-        Queue<Node> result = search();
+        Queue<DLXNode> result = search();
 
-        for (Node node : result) {
+        for (DLXNode node : result) {
             solution.add(node.column.payload);
         }
         return solution;
@@ -28,11 +28,14 @@ public abstract class ExactCoverProblem<P, Q> {
 
     public Set<Set<P>> solve() {
         Set<Set<P>> solution = new HashSet();
-        Queue<Node> result = search();
+        Queue<DLXNode> result = search();
 
-        for (Node node : result) {
+
+
+        // this actually reconstructs P
+        for (DLXNode node : result) {
             Set<P> p = new HashSet();
-            Node current = node;
+            DLXNode current = node;
             do {
                 p.add(current.column.payload);
                 current = current.right;
@@ -43,7 +46,7 @@ public abstract class ExactCoverProblem<P, Q> {
         return solution;
     }
 
-    public Queue<Node> search() {
+    public Queue<DLXNode> search() {
         root = new HeaderNode(null);
         universe.forEach(this::addCandidate);
         constraints.forEach(this::addConstraint);
@@ -51,12 +54,12 @@ public abstract class ExactCoverProblem<P, Q> {
         return search(0, new LinkedList<>());
     }
 
-    private Queue<Node> search(int k, Queue<Node> solution) {
+    private Queue<DLXNode> search(int k, Queue<DLXNode> solution) {
         if (root.right == root) {
             return solution;
         }
 
-        Node candidate, current;
+        DLXNode candidate, current;
         HeaderNode header = chooseColumn();
 
         header.cover();
@@ -92,12 +95,12 @@ public abstract class ExactCoverProblem<P, Q> {
     private void addConstraint(Q constraint) {
         P candidate;
         HeaderNode column = (HeaderNode) root.right;
-        Node first = null, node;
+        DLXNode first = null, node;
 
         while (column != root) {
             candidate = column.payload;
             if (relation(constraint, candidate)) {
-                node = new Node();
+                node = new DLXNode();
                 node.down = node.column = column;
                 node.up = node.column.up;
                 node.up.down = node;
@@ -129,17 +132,17 @@ public abstract class ExactCoverProblem<P, Q> {
         return c;
     }
 
-    class Node {
-        Node left, right, up, down;
+    class DLXNode {
+        DLXNode left, right, up, down;
         HeaderNode column;
 
-        Node() {
+        DLXNode() {
             left = right = up = down = this;
             column = null;
         }
     }
 
-    class HeaderNode extends Node {
+    class HeaderNode extends DLXNode {
         P payload;
         int count = 0;
 
@@ -151,8 +154,8 @@ public abstract class ExactCoverProblem<P, Q> {
             right.left = left;
             left.right = right;
 
-            for (Node i = down; i != this; i = i.down) {
-                for (Node j = i.right; j != i; j = j.right) {
+            for (DLXNode i = down; i != this; i = i.down) {
+                for (DLXNode j = i.right; j != i; j = j.right) {
                     j.down.up = j.up;
                     j.up.down = j.down;
                     --j.column.count;
@@ -161,8 +164,8 @@ public abstract class ExactCoverProblem<P, Q> {
         }
 
         private void uncover() {
-            for (Node i = up; i != this; i = i.up) {
-                for (Node j = i.left; j != i; j = j.left) {
+            for (DLXNode i = up; i != this; i = i.up) {
+                for (DLXNode j = i.left; j != i; j = j.left) {
                     ++j.column.count;
                     j.up.down = j;
                     j.down.up = j;
