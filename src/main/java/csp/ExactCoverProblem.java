@@ -1,6 +1,7 @@
 package csp;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public abstract class ExactCoverProblem<P, Q> {
 
@@ -14,42 +15,16 @@ public abstract class ExactCoverProblem<P, Q> {
         this.constraints = constraints;
     }
 
+//    public Set<P> solve() {
+//        return search().stream().map(node -> node.column.constraint).collect(Collectors.toSet());
+//    }
+
     public abstract boolean relation(Q constraint, P candidate);
-
-    public Set<P> solve2() {
-        Set<P> solution = new HashSet();
-        Queue<DLXNode> result = search();
-
-        for (DLXNode node : result) {
-            solution.add(node.column.payload);
-        }
-        return solution;
-    }
-
-    public Set<Set<P>> solve() {
-        Set<Set<P>> solution = new HashSet();
-        Queue<DLXNode> result = search();
-
-
-
-        // this actually reconstructs P
-        for (DLXNode node : result) {
-            Set<P> p = new HashSet();
-            DLXNode current = node;
-            do {
-                p.add(current.column.payload);
-                current = current.right;
-            } while (current != node);
-            solution.add(p);
-        }
-
-        return solution;
-    }
 
     public Queue<DLXNode> search() {
         root = new HeaderNode(null);
-        universe.forEach(this::addCandidate);
         constraints.forEach(this::addConstraint);
+        universe.forEach(this::addCandidate);
 
         return search(0, new LinkedList<>());
     }
@@ -62,7 +37,15 @@ public abstract class ExactCoverProblem<P, Q> {
         DLXNode candidate, current;
         HeaderNode header = chooseColumn();
 
+        String s = "";
+        for (int i = 0; i < k; ++i) {
+            s += " ";
+        }
+        System.err.println(s + header.constraint.toString());
+
         header.cover();
+
+
         for (candidate = header.down; candidate != header; candidate = candidate.down) {
             solution.add(candidate);
             for (current = candidate.right; current != candidate; current = current.right) {
@@ -81,8 +64,8 @@ public abstract class ExactCoverProblem<P, Q> {
         return null;
     }
 
-    private void addCandidate(P candidate) {
-        HeaderNode node = new HeaderNode(candidate);
+    private void addConstraint(Q constraint) {
+        HeaderNode node = new HeaderNode(constraint);
 
         node.up = node.down = node.column = node;
 
@@ -92,15 +75,13 @@ public abstract class ExactCoverProblem<P, Q> {
         node.right.left = node;
     }
 
-    private void addConstraint(Q constraint) {
-        P candidate;
+    private void addCandidate(P candidate) {
         HeaderNode column = (HeaderNode) root.right;
         DLXNode first = null, node;
 
         while (column != root) {
-            candidate = column.payload;
-            if (relation(constraint, candidate)) {
-                node = new DLXNode();
+            if (relation(column.constraint, candidate)) {
+                node = new DLXNode(candidate.toString());
                 node.down = node.column = column;
                 node.up = node.column.up;
                 node.up.down = node;
@@ -108,8 +89,7 @@ public abstract class ExactCoverProblem<P, Q> {
 
                 if (first == null) {
                     first = node.left = node.right = node;
-                }
-                else {
+                } else {
                     node.left = first.left;
                     node.right = first;
                     node.left.right = node;
@@ -136,21 +116,36 @@ public abstract class ExactCoverProblem<P, Q> {
         DLXNode left, right, up, down;
         HeaderNode column;
 
+        String candidate;
+
         DLXNode() {
             left = right = up = down = this;
             column = null;
         }
+
+        DLXNode(String candidate) {
+            this.candidate = candidate;
+            left = right = up = down = this;
+            column = null;
+        }
+
+        @Override
+        public String toString() {
+            return "row: " + candidate + " in column: " + column.toString();
+        }
     }
 
     class HeaderNode extends DLXNode {
-        P payload;
+        Q constraint;
         int count = 0;
 
-        HeaderNode(P payload) {
-            this.payload = payload;
+        HeaderNode(Q constraint) {
+            this.constraint = constraint;
         }
 
         private void cover() {
+            System.err.println("covering " + this.toString());
+
             right.left = left;
             left.right = right;
 
@@ -174,6 +169,14 @@ public abstract class ExactCoverProblem<P, Q> {
             }
             left.right = this;
             right.left = this;
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = new StringBuilder("HeaderNode{");
+            sb.append("constraint=").append(constraint);
+            sb.append('}');
+            return sb.toString();
         }
     }
 }
