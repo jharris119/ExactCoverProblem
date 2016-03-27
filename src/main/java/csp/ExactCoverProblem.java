@@ -8,20 +8,20 @@ public abstract class ExactCoverProblem<P, Q> {
     Set<P> universe;
     Set<Q> constraints;
 
-    DLXNode root;
+    DancingLinksNode root;
 
     public ExactCoverProblem(Set<P> universe, Set<Q> constraints) {
         this.universe = universe;
         this.constraints = constraints;
     }
 
-//    public Set<P> solve() {
-//        return search().stream().map(node -> node.column.constraint).collect(Collectors.toSet());
-//    }
-
     public abstract boolean relation(Q constraint, P candidate);
 
-    public Queue<DLXNode> search() {
+    public Set<P> solve() {
+        return search().stream().map(node -> node.candidate).collect(Collectors.toSet());
+    }
+
+    public Queue<DancingLinksNode> search() {
         root = new HeaderNode(null);
         constraints.forEach(this::addConstraint);
         universe.forEach(this::addCandidate);
@@ -29,23 +29,15 @@ public abstract class ExactCoverProblem<P, Q> {
         return search(0, new LinkedList<>());
     }
 
-    private Queue<DLXNode> search(int k, Queue<DLXNode> solution) {
+    private Queue<DancingLinksNode> search(int k, Queue<DancingLinksNode> solution) {
         if (root.right == root) {
             return solution;
         }
 
-        DLXNode candidate, current;
+        DancingLinksNode candidate, current;
         HeaderNode header = chooseColumn();
 
-        String s = "";
-        for (int i = 0; i < k; ++i) {
-            s += " ";
-        }
-        System.err.println(s + header.constraint.toString());
-
         header.cover();
-
-
         for (candidate = header.down; candidate != header; candidate = candidate.down) {
             solution.add(candidate);
             for (current = candidate.right; current != candidate; current = current.right) {
@@ -77,11 +69,11 @@ public abstract class ExactCoverProblem<P, Q> {
 
     private void addCandidate(P candidate) {
         HeaderNode column = (HeaderNode) root.right;
-        DLXNode first = null, node;
+        DancingLinksNode first = null, node;
 
         while (column != root) {
             if (relation(column.constraint, candidate)) {
-                node = new DLXNode(candidate.toString());
+                node = new DancingLinksNode(candidate);
                 node.down = node.column = column;
                 node.up = node.column.up;
                 node.up.down = node;
@@ -112,18 +104,12 @@ public abstract class ExactCoverProblem<P, Q> {
         return c;
     }
 
-    class DLXNode {
-        DLXNode left, right, up, down;
+    class DancingLinksNode {
+        DancingLinksNode left, right, up, down;
         HeaderNode column;
+        final P candidate;
 
-        String candidate;
-
-        DLXNode() {
-            left = right = up = down = this;
-            column = null;
-        }
-
-        DLXNode(String candidate) {
+        DancingLinksNode(P candidate) {
             this.candidate = candidate;
             left = right = up = down = this;
             column = null;
@@ -135,22 +121,21 @@ public abstract class ExactCoverProblem<P, Q> {
         }
     }
 
-    class HeaderNode extends DLXNode {
+    class HeaderNode extends DancingLinksNode {
         Q constraint;
         int count = 0;
 
         HeaderNode(Q constraint) {
+            super(null);
             this.constraint = constraint;
         }
 
         private void cover() {
-            System.err.println("covering " + this.toString());
-
             right.left = left;
             left.right = right;
 
-            for (DLXNode i = down; i != this; i = i.down) {
-                for (DLXNode j = i.right; j != i; j = j.right) {
+            for (DancingLinksNode i = down; i != this; i = i.down) {
+                for (DancingLinksNode j = i.right; j != i; j = j.right) {
                     j.down.up = j.up;
                     j.up.down = j.down;
                     --j.column.count;
@@ -159,8 +144,8 @@ public abstract class ExactCoverProblem<P, Q> {
         }
 
         private void uncover() {
-            for (DLXNode i = up; i != this; i = i.up) {
-                for (DLXNode j = i.left; j != i; j = j.left) {
+            for (DancingLinksNode i = up; i != this; i = i.up) {
+                for (DancingLinksNode j = i.left; j != i; j = j.left) {
                     ++j.column.count;
                     j.up.down = j;
                     j.down.up = j;

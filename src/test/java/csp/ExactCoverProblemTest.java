@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableSet;
 
 import org.junit.Test;
 
-import java.util.Collection;
 import java.util.Set;
 
 import static org.junit.Assert.*;
@@ -33,10 +32,7 @@ public class ExactCoverProblemTest {
 
     @Test
     public void testSolve() {
-        System.out.println(ecp.search());
-
-//        assertTrue(s.contains(b));
-//        assertTrue(s.contains(d));
-//        assertTrue(s.contains(f));
+        Set<Set<Integer>> result = ecp.solve();
+        assertEquals(ImmutableSet.of(b, d, f), result);
     }
 }
