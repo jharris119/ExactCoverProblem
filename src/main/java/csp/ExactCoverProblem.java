@@ -21,7 +21,7 @@ public abstract class ExactCoverProblem<P, Q> {
         return search().stream().map(node -> node.candidate).collect(Collectors.toSet());
     }
 
-    public Queue<DancingLinksNode> search() {
+    public Deque<DancingLinksNode> search() {
         root = new HeaderNode(null);
         constraints.forEach(this::addConstraint);
         universe.forEach(this::addCandidate);
@@ -29,7 +29,7 @@ public abstract class ExactCoverProblem<P, Q> {
         return search(0, new LinkedList<>());
     }
 
-    private Queue<DancingLinksNode> search(int k, Queue<DancingLinksNode> solution) {
+    private Deque<DancingLinksNode> search(int k, Deque<DancingLinksNode> solution) {
         if (root.right == root) {
             return solution;
         }
@@ -46,7 +46,7 @@ public abstract class ExactCoverProblem<P, Q> {
             if (search(k + 1, solution) != null) {
                 return solution;
             }
-            candidate = solution.remove();
+            candidate = solution.removeLast();
             for (current = candidate.left; current != candidate; current = current.left) {
                 current.column.uncover();
             }
@@ -97,6 +97,9 @@ public abstract class ExactCoverProblem<P, Q> {
     private HeaderNode chooseColumn() {
         HeaderNode j, c;
         for (j = (HeaderNode) root.right, c = j; j != root; j = (HeaderNode) j.right) {
+            if (j.count == 0) {
+                return j;
+            }
             if (j.count < c.count) {
                 c = j;
             }
