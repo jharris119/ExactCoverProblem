@@ -18,7 +18,12 @@ public abstract class ExactCoverProblem<P, Q> {
     public abstract boolean relation(Q constraint, P candidate);
 
     public Set<P> solve() {
-        return search().stream().map(node -> node.candidate).collect(Collectors.toSet());
+        Deque<DancingLinksNode> answer = search();
+        if (answer == null) {
+            return null;
+        }
+
+        return answer.stream().map(node -> node.candidate).collect(Collectors.toSet());
     }
 
     public Deque<DancingLinksNode> search() {
