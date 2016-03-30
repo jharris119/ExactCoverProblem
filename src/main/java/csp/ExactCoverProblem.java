@@ -117,11 +117,6 @@ public abstract class ExactCoverProblem<P, Q> {
             left = right = up = down = this;
             column = null;
         }
-
-        @Override
-        public String toString() {
-            return "row: " + candidate + " in column: " + column.toString();
-        }
     }
 
     class HeaderNode extends DancingLinksNode {
@@ -157,14 +152,6 @@ public abstract class ExactCoverProblem<P, Q> {
             }
             left.right = this;
             right.left = this;
-        }
-
-        @Override
-        public String toString() {
-            final StringBuilder sb = new StringBuilder("HeaderNode{");
-            sb.append("constraint=").append(constraint);
-            sb.append('}');
-            return sb.toString();
         }
     }
 }
