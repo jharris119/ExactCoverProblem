@@ -3,6 +3,20 @@ package csp;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Implementation of Algorithm X with dancing links to solve the exact cover problem.
+ *
+ * The problem is as follows: Given a collection \(S\) of subsets of a set \(X\),
+ * an exact cover of \(X\) is a subcollection \(S^*\) of \(S\) such that every
+ * element in \(X\) appears in one and only one member of \(S^*\).
+ *
+ * More generally, given sets \(P\) and \(Q\) and a relation \(R \subseteq P \times Q\),
+ * then \(P^*\) is an exact cover of \(Q\) if each element in \(Q\) is \(R^{-1}\)-related
+ * to exactly one element in \(P\).
+ *
+ * @param <P> the type of elements in \(P\)
+ * @param <Q> the type of elements in \(Q\)
+ */
 public abstract class ExactCoverProblem<P, Q> {
 
     Set<P> universe;
@@ -10,13 +24,32 @@ public abstract class ExactCoverProblem<P, Q> {
 
     DancingLinksNode root;
 
+    /**
+     * Constructor.
+     *
+     * @param universe all candidates in the problem, all subsets of \(X\)
+     * @param constraints problem constraints, each constraint satisfies
+     *                    exactly one candidate in the solution
+     */
     public ExactCoverProblem(Set<P> universe, Set<Q> constraints) {
         this.universe = universe;
         this.constraints = constraints;
     }
 
+    /**
+     * The relation between the candidate and constraint.
+     *
+     * @param constraint a constraint
+     * @param candidate a candidate
+     * @return <code>true</code> iff \(R\left(\texttt{candidate}, \texttt{constraint}\right)\) obtains
+     */
     public abstract boolean relation(Q constraint, P candidate);
 
+    /**
+     * Solve the puzzle.
+     *
+     * @return the solution, a subset of <code>universe</code>
+     */
     public Set<P> solve() {
         Deque<DancingLinksNode> answer = search();
         if (answer == null) {
