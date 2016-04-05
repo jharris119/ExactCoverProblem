@@ -26,7 +26,7 @@ public abstract class ExactCoverProblem<P, Q> {
         return answer.stream().map(node -> node.candidate).collect(Collectors.toSet());
     }
 
-    public Deque<DancingLinksNode> search() {
+    private Deque<DancingLinksNode> search() {
         root = new HeaderNode(null);
         constraints.forEach(this::addConstraint);
         universe.forEach(this::addCandidate);
